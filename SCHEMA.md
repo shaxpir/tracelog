@@ -1,6 +1,6 @@
 # Tracelog JSONL Schema
 
-Each line in a tracelog `.jsonl` file is a self-contained JSON object with exactly one top-level key identifying the event type. There are five event types: `metadata`, `transaction`, `span`, `error`, and `metricset`.
+Each line in a tracelog `.jsonl` file is a self-contained JSON object with exactly one top-level key identifying the event type. There are six event types: `metadata`, `transaction`, `span`, `error`, `metricset`, and `event`.
 
 All timestamps are in **microseconds** since Unix epoch.
 
@@ -349,6 +349,57 @@ Breakdown metrics include these additional fields as dimensions (alongside `tags
 | `span.self_time.sum.us` | Total self-time in microseconds |
 
 These are emitted with `transaction.name`, `transaction.type`, `span.type`, and optionally `span.subtype` as dimensions.
+
+---
+
+## event
+
+A custom event for recording arbitrary application-level occurrences: user analytics, log lines, client-side events from mobile or browser apps, etc.
+
+```jsonl
+{"event":{...}}
+```
+
+### Core fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `type` | string | yes | Event category (e.g. `page_view`, `button_click`, `purchase`, `log`) |
+| `timestamp` | integer | yes | Time of the event in milliseconds since epoch |
+| `duration` | number | no | Duration in milliseconds (e.g. page load time, action duration) |
+| `message` | string | no | Human-readable description; doubles as a log line |
+| `level` | string | no | Severity level: `debug`, `info`, `warn`, `error`, `fatal` |
+
+### User (optional)
+
+Identity of the end-user who triggered the event.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `user.id` | string | no | Unique user identifier |
+| `user.email` | string | no | User email address |
+| `user.username` | string | no | Display name or username |
+
+### Client (optional)
+
+Describes the client environment where the event originated (e.g. a mobile app, browser).
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `client.name` | string | no | App/client name (e.g. `shaxpir-ios`, `shaxpir-web`) |
+| `client.version` | string | no | App version |
+| `client.os.name` | string | no | OS name (e.g. `iOS`, `Android`, `Windows`) |
+| `client.os.version` | string | no | OS version |
+| `client.device.model` | string | no | Device model (e.g. `iPhone 16 Pro`, `Pixel 9`) |
+| `client.device.type` | string | no | Device type (e.g. `phone`, `tablet`, `desktop`) |
+| `client.runtime.name` | string | no | Client runtime (e.g. `React Native`, `Chrome`) |
+| `client.runtime.version` | string | no | Runtime version |
+
+### Params (optional)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `params` | object | no | Open-ended key-value data specific to this event type |
 
 ---
 
