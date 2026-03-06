@@ -18,7 +18,7 @@ Start tracelog at the very top of your application, before importing anything el
 require('tracelog').start({
   serviceName: 'my-api',
   serviceVersion: '1.0.0',
-  logFilePath: '/var/log/myapp/traces.jsonl',
+  logDir: '/var/log/myapp',
 });
 ```
 
@@ -55,7 +55,8 @@ All options can be set via `require('tracelog').start({...})`, via environment v
 | `serviceName` | `TRACELOG_SERVICE_NAME` | from package.json | Name of your service |
 | `serviceVersion` | `TRACELOG_SERVICE_VERSION` | from package.json | Version of your service |
 | `environment` | `TRACELOG_ENVIRONMENT` | `NODE_ENV` or `development` | Deployment environment |
-| `logFilePath` | — | `./tracelog.jsonl` | Base path for JSONL output files |
+| `logDir` | `TRACELOG_LOG_DIR` | `.` (cwd) | Directory for JSONL output files |
+| `logFilePrefix` | `TRACELOG_LOG_FILE_PREFIX` | `tracelog` | Filename prefix (files are named `{prefix}-{date}.jsonl`) |
 | `logMaxFileSize` | — | `104857600` (100MB) | Rotate when file exceeds this size in bytes |
 | `logRotationSchedule` | `TRACELOG_LOG_ROTATION_SCHEDULE` | `daily` | Time-based rotation: `daily` or `hourly` |
 | `s3Bucket` | `TRACELOG_S3_BUCKET` | — | S3 bucket for log upload (disabled if not set) |

@@ -31,7 +31,7 @@ function listFiles(dir) {
 
 function makeClient(dir, opts = {}) {
   return new JsonlFileClient({
-    filePath: path.join(dir, 'tracelog.jsonl'),
+    logDir: dir,
     serviceName: opts.serviceName || 'test-svc',
     serviceVersion: '1.0.0',
     environment: 'test',

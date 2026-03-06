@@ -8,7 +8,8 @@ All options can be set via `require('tracelog').start({...})`, via environment v
 
 | Option | Env Var | Default | Description |
 |--------|---------|---------|-------------|
-| `logFilePath` | — | `./tracelog.jsonl` | Base path for JSONL output files (see [File naming](#file-naming)) |
+| `logDir` | `TRACELOG_LOG_DIR` | `.` (cwd) | Directory for JSONL output files (see [File naming](#file-naming)) |
+| `logFilePrefix` | `TRACELOG_LOG_FILE_PREFIX` | `tracelog` | Filename prefix (files are named `{prefix}-{date}.jsonl`) |
 | `logMaxFileSize` | — | `104857600` (100MB) | Rotate when file exceeds this size in bytes |
 | `logFlushIntervalMs` | — | `1000` | How often to flush the write buffer (ms) |
 | `logRotationSchedule` | `TRACELOG_LOG_ROTATION_SCHEDULE` | `daily` | Time-based rotation: `daily`, `hourly` |

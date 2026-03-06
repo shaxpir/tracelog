@@ -68,7 +68,8 @@ These are passed to `agent.start()` alongside the standard config options:
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `logFilePath` | `./tracelog.jsonl` | Base path for JSONL output files |
+| `logDir` | `.` (cwd) | Directory for JSONL output files |
+| `logFilePrefix` | `tracelog` | Filename prefix (`{prefix}-{date}.jsonl`) |
 | `logMaxFileSize` | `104857600` (100MB) | Rotate file when it exceeds this size in bytes |
 | `logFlushIntervalMs` | `1000` | Buffer flush interval in milliseconds |
 | `logRotationSchedule` | `daily` | Time-based rotation: `daily` or `hourly` |
@@ -117,7 +118,7 @@ When modifying the JSONL client or agent, a quick smoke test:
 
 ```js
 const apm = require('.');
-apm.start({ serviceName: 'test', logFilePath: '/tmp/test.jsonl' });
+apm.start({ serviceName: 'test', logDir: '/tmp' });
 const t = apm.startTransaction('test');
 t.end();
 apm.flush(() => {

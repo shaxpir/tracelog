@@ -297,7 +297,8 @@ declare namespace apm {
     verifyServerCert?: boolean;
 
     // Tracelog: output & rotation
-    logFilePath?: string;
+    logDir?: string;
+    logFilePrefix?: string;
     logMaxFileSize?: number;
     logFlushIntervalMs?: number;
     logRotationSchedule?: 'daily' | 'hourly' | string;
