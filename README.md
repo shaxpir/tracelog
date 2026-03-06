@@ -1,8 +1,8 @@
 # Tracelog
 
-Node.js APM instrumentation that writes traces to local JSONL files.
+Node.js APM instrumentation that writes traces to local JSONL files, with automatic rotation and optional S3 upload.
 
-Forked from [elastic-apm-node](https://github.com/elastic/apm-agent-nodejs) v4.15.0. All 43 auto-instrumentation modules are preserved (Express, Fastify, Koa, PostgreSQL, MongoDB, Redis, AWS SDK, etc.), but instead of shipping data to an Elastic APM server, everything is written to a `.jsonl` file on disk with automatic file rotation.
+Forked from [elastic-apm-node](https://github.com/elastic/apm-agent-nodejs) v4.15.0. All 43 auto-instrumentation modules are preserved (Express, Fastify, Koa, PostgreSQL, MongoDB, Redis, AWS SDK, etc.), but instead of shipping data to an Elastic APM server, everything is written to timestamped `.jsonl` files on disk with time-based and size-based rotation.
 
 ## Installation
 
@@ -54,13 +54,14 @@ All options can be set via `require('tracelog').start({...})`, via environment v
 | `serviceName` | `TRACELOG_SERVICE_NAME` | from package.json | Name of your service |
 | `serviceVersion` | `TRACELOG_SERVICE_VERSION` | from package.json | Version of your service |
 | `environment` | `TRACELOG_ENVIRONMENT` | `NODE_ENV` or `development` | Deployment environment |
-| `logFilePath` | — | `./tracelog.jsonl` | Path to the JSONL output file |
+| `logFilePath` | — | `./tracelog.jsonl` | Base path for JSONL output files |
 | `logMaxFileSize` | — | `104857600` (100MB) | Rotate when file exceeds this size in bytes |
-| `logMaxFiles` | — | `10` | Number of rotated files to keep |
+| `logRotationSchedule` | `TRACELOG_LOG_ROTATION_SCHEDULE` | `daily` | Time-based rotation: `daily` or `hourly` |
+| `s3Bucket` | `TRACELOG_S3_BUCKET` | — | S3 bucket for log upload (disabled if not set) |
 | `active` | `TRACELOG_ACTIVE` | `true` | Enable/disable the agent entirely |
 | `logLevel` | `TRACELOG_LOG_LEVEL` | `info` | Agent log level |
 
-For the complete list of all configuration options (instrumentation, sampling, error capture, stack traces, span compression, metrics, cloud, and more), see **[CONFIG.md](CONFIG.md)**.
+For the complete list of all configuration options (instrumentation, sampling, error capture, stack traces, span compression, metrics, S3 upload, cloud, and more), see **[CONFIG.md](CONFIG.md)**.
 
 ## Auto-instrumented modules
 

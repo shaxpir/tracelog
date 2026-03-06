@@ -4,14 +4,66 @@ All options can be set via `require('tracelog').start({...})`, via environment v
 
 ---
 
-## Output
+## Output & rotation
 
 | Option | Env Var | Default | Description |
 |--------|---------|---------|-------------|
-| `logFilePath` | — | `./tracelog.jsonl` | Path to the JSONL output file |
+| `logFilePath` | — | `./tracelog.jsonl` | Base path for JSONL output files (see [File naming](#file-naming)) |
 | `logMaxFileSize` | — | `104857600` (100MB) | Rotate when file exceeds this size in bytes |
-| `logMaxFiles` | — | `10` | Number of rotated files to keep |
 | `logFlushIntervalMs` | — | `1000` | How often to flush the write buffer (ms) |
+| `logRotationSchedule` | `TRACELOG_LOG_ROTATION_SCHEDULE` | `daily` | Time-based rotation: `daily`, `hourly` |
+
+### File naming
+
+Files are named with a timestamp derived from the rotation schedule:
+
+```
+tracelog-2026-03-06.jsonl           # daily rotation
+tracelog-2026-03-06T14.jsonl        # hourly rotation
+```
+
+If a size-based rotation occurs within the same time period, a dot-numbered suffix is appended:
+
+```
+tracelog-2026-03-06.jsonl           # first file of the day
+tracelog-2026-03-06.1.jsonl         # size rotation within same day
+tracelog-2026-03-06.2.jsonl         # another size rotation
+```
+
+Every file starts with a `metadata` line as its first record.
+
+## S3 upload
+
+Set `s3Bucket` to enable automatic upload of log files to S3. Completed (rotated) files are gzipped before upload and deleted locally after a successful upload. The current (incomplete) file is uploaded as-is on a timer and on process exit.
+
+| Option | Env Var | Default | Description |
+|--------|---------|---------|-------------|
+| `s3Bucket` | `TRACELOG_S3_BUCKET` | — | S3 bucket name. If not set, S3 upload is disabled. |
+| `s3Region` | `TRACELOG_S3_REGION` | from AWS env | AWS region |
+| `s3KeyTemplate` | `TRACELOG_S3_KEY_TEMPLATE` | `{serviceName}/{environment}/{date}/{hostname}-{pid}-{timestamp}.jsonl` | S3 key with variable substitution |
+| `s3UploadIntervalMs` | `TRACELOG_S3_UPLOAD_INTERVAL_MS` | `60000` (1 min) | How often to upload the current (incomplete) file |
+| `s3AccessKeyId` | `TRACELOG_S3_ACCESS_KEY_ID` | from AWS credential chain | AWS access key ID |
+| `s3SecretAccessKey` | `TRACELOG_S3_SECRET_ACCESS_KEY` | from AWS credential chain | AWS secret access key |
+| `s3SessionToken` | `TRACELOG_S3_SESSION_TOKEN` | — | AWS session token (for temporary credentials) |
+
+### S3 key template variables
+
+| Variable | Example | Description |
+|----------|---------|-------------|
+| `{serviceName}` | `my-api` | Service name |
+| `{environment}` | `production` | Environment |
+| `{hostname}` | `ip-10-0-1-42` | System hostname |
+| `{pid}` | `12345` | Process ID |
+| `{date}` | `2026-03-06` | Date (YYYY-MM-DD) |
+| `{year}` | `2026` | Year |
+| `{month}` | `03` | Month (zero-padded) |
+| `{day}` | `06` | Day (zero-padded) |
+| `{hour}` | `14` | Hour (zero-padded, 24h) |
+| `{minute}` | `30` | Minute (zero-padded) |
+| `{timestamp}` | `1709740800` | Unix timestamp (seconds) |
+| `{filename}` | `tracelog-2026-03-06.jsonl` | Local filename |
+
+Completed files automatically get `.gz` appended to the key.
 
 ## Service identity
 

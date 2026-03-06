@@ -25,6 +25,7 @@ lib/apm-client/
   apm-client.js             # Client factory — creates JsonlFileClient or NoopApmClient
   jsonl-file-client.js      # JSONL file transport (buffering, rotation, truncation)
   noop-apm-client.js        # No-op client for contextPropagationOnly mode
+  s3-uploader.js            # S3 upload (gzip completed files, upload current on timer)
   ndjson.js                 # NDJSON serialization utility
   truncate.js               # Field truncation for APM data model
 lib/cloud-metadata/         # AWS/Azure/GCP instance metadata detection
@@ -55,8 +56,10 @@ User code / auto-instrumentation
             → JsonlFileClient.sendTransaction/sendSpan/sendError()
               → Truncate fields, serialize as NDJSON
                 → Buffer in memory
-                  → Periodic flush (default 1s) appends to .jsonl file
-                    → File rotation when maxFileSize exceeded
+                  → Periodic flush (default 1s) appends to timestamped .jsonl file
+                    → Time-based rotation (daily/hourly) or size-based rotation
+                      → S3Uploader.uploadCompleted() → gzip, upload, delete local
+                      → S3Uploader.uploadCurrent() on timer and destroy()
 ```
 
 ## Config options (tracelog-specific)
@@ -65,11 +68,18 @@ These are passed to `agent.start()` alongside the standard config options:
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `logFilePath` | `./tracelog.jsonl` | Path to the JSONL output file |
+| `logFilePath` | `./tracelog.jsonl` | Base path for JSONL output files |
 | `logMaxFileSize` | `104857600` (100MB) | Rotate file when it exceeds this size in bytes |
-| `logMaxFiles` | `10` | Number of rotated files to keep |
 | `logFlushIntervalMs` | `1000` | Buffer flush interval in milliseconds |
+| `logRotationSchedule` | `daily` | Time-based rotation: `daily` or `hourly` |
 | `cloudProvider` | `auto` | Cloud metadata detection: `auto`, `aws`, `gcp`, `azure`, or `none` |
+| `s3Bucket` | — | S3 bucket name (enables S3 upload if set) |
+| `s3Region` | from env | AWS region |
+| `s3KeyTemplate` | `{serviceName}/{environment}/{date}/{hostname}-{pid}-{timestamp}.jsonl` | S3 key template |
+| `s3UploadIntervalMs` | `60000` | How often to upload the current file to S3 |
+| `s3AccessKeyId` | from env | AWS access key ID |
+| `s3SecretAccessKey` | from env | AWS secret access key |
+| `s3SessionToken` | — | AWS session token (temporary credentials) |
 
 ## JSONL output format
 
@@ -118,8 +128,5 @@ apm.flush(() => {
 
 ## Planned work
 
-- S3 upload of rotated JSONL files
-- Config schema cleanup (remove unused server-related options)
-- TypeScript type updates for new config options
-- README rewrite
-- Test suite adaptation
+- TypeScript type updates for new config options (`index.d.ts`)
+- Test suite adaptation (existing tests reference mock HTTP server)
