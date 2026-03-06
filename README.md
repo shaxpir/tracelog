@@ -33,14 +33,17 @@ That's it. Tracelog will automatically instrument your HTTP servers, database cl
 
 ## Output format
 
-Each line is a self-contained JSON object. Files start with a metadata line:
+Each line is a self-contained JSON object with one top-level key identifying the event type. There are five event types: `metadata`, `transaction`, `span`, `error`, and `metricset`. Files start with a metadata line:
 
 ```jsonl
 {"metadata":{"service":{"name":"my-api","version":"1.0.0"},"process":{"pid":1234},"system":{"hostname":"ip-10-0-1-42"},"cloud":{"provider":"aws","instance":{"id":"i-0abc123"},"availability_zone":"us-east-1a"}}}
-{"transaction":{"id":"abc123","trace_id":"def456","name":"GET /users","type":"request","duration":42.5,"result":"HTTP 2xx"}}
-{"span":{"id":"ghi789","transaction_id":"abc123","name":"SELECT * FROM users","type":"db","subtype":"postgresql","duration":12.3}}
-{"error":{"message":"Something broke","exception":{"type":"TypeError","stacktrace":[...]}}}
+{"transaction":{"id":"abc123","trace_id":"def456","name":"GET /users","type":"request","duration":42.5,"result":"HTTP 2xx","sampled":true,"outcome":"success","span_count":{"started":1}}}
+{"span":{"id":"ghi789","transaction_id":"abc123","trace_id":"def456","parent_id":"abc123","name":"SELECT * FROM users","type":"db","subtype":"postgresql","duration":12.3,"sync":true,"outcome":"success"}}
+{"error":{"id":"err001","timestamp":1709740800000000,"exception":{"message":"Something broke","type":"TypeError","handled":false,"stacktrace":[...]}}}
+{"metricset":{"timestamp":1709740800000000,"samples":{"system.process.cpu.total.norm.pct":{"value":0.023},"nodejs.memory.heap.used.bytes":{"value":52428800}}}}
 ```
+
+For the complete schema of every field in each event type, see **[SCHEMA.md](SCHEMA.md)**.
 
 ## Configuration
 
