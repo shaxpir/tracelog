@@ -487,6 +487,35 @@ test('maxLocalRetentionDays deletes old files on rotation', (t) => {
   t.end();
 });
 
+// --- Buffer backpressure ---
+
+test('maxBufferSize drops oldest events when buffer is full', (t) => {
+  const dir = tmpDir();
+  const client = makeClient(dir, {
+    maxBufferSize: 5,
+    flushIntervalMs: 600000, // disable auto-flush
+  });
+
+  // Send 8 transactions but buffer only holds 5
+  for (let i = 0; i < 8; i++) {
+    client.sendTransaction({ name: `tx-${i}`, type: 'request', duration: 10 });
+  }
+
+  client.flush();
+
+  const files = listFiles(dir);
+  const lines = readLines(path.join(dir, files[0]));
+  const txLines = lines.filter((l) => l.transaction);
+
+  t.equal(txLines.length, 5, 'only 5 transactions written (buffer limit)');
+  // The oldest 3 (tx-0, tx-1, tx-2) should have been dropped
+  t.equal(txLines[0].transaction.name, 'tx-3', 'oldest kept is tx-3');
+  t.equal(txLines[4].transaction.name, 'tx-7', 'newest is tx-7');
+
+  client.destroy();
+  t.end();
+});
+
 test('maxLocalRetentionDays 0 means no cleanup', (t) => {
   const dir = tmpDir();
   let now = new Date('2026-06-10T10:00:00Z');

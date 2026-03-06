@@ -13,6 +13,7 @@ All options can be set via `require('tracelog').start({...})`, via environment v
 | `logFlushIntervalMs` | — | `1000` | How often to flush the write buffer (ms) |
 | `logRotationSchedule` | `TRACELOG_LOG_ROTATION_SCHEDULE` | `daily` | Time-based rotation: `daily`, `hourly` |
 | `maxLocalRetentionDays` | `TRACELOG_MAX_LOCAL_RETENTION_DAYS` | `0` (disabled) | Auto-delete local log files older than N days on rotation. `0` disables cleanup. |
+| `maxBufferSize` | `TRACELOG_MAX_BUFFER_SIZE` | `10000` | Max events buffered in memory before dropping oldest. Prevents unbounded memory growth. |
 
 ### File naming
 
