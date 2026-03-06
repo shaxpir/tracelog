@@ -19,6 +19,9 @@ require('tracelog').start({
   serviceName: 'my-api',
   serviceVersion: '1.0.0',
   logDir: '/var/log/myapp',
+  s3Bucket: 'my-traces',
+  s3Region: 'us-east-1',
+  s3KeyTemplate: '{serviceName}/{environment}/{date}/{hostname}-{pid}-{timestamp}.jsonl',
 });
 ```
 
@@ -29,7 +32,35 @@ TRACELOG_SERVICE_NAME=my-api \
 node -r tracelog/start app.js
 ```
 
-That's it. Tracelog will automatically instrument your HTTP servers, database clients, and other modules, writing transaction, span, error, and metric data to the JSONL file.
+That's it. Tracelog will automatically instrument your HTTP servers, database clients, and other modules, writing transaction, span, error, and metric data to the JSONL file. If `s3Bucket` is set, completed (rotated) files are gzipped and uploaded to S3, then deleted locally.
+
+## Custom events
+
+Tracelog adds a custom **event** type that has no equivalent in Elastic APM or OpenTelemetry. Events are free-form records for anything that isn't a trace, error, or metric — user analytics, audit logs, client-side telemetry from mobile or browser apps, or structured log lines.
+
+```js
+// Single event
+apm.captureEvent('page_view', {
+  message: 'User viewed dashboard',
+  level: 'info',
+  user: { id: 'u-abc123', username: 'jane_doe' },
+  client: { name: 'shaxpir-ios', version: '2.4.1' },
+  params: { page: '/dashboard', referrer: '/home' },
+});
+```
+
+Events support standardized fields for user identity (`user`), client environment (`client`), severity (`level`), timing (`duration`), and an open-ended `params` object for anything else. Only `type` is required.
+
+For server endpoints that receive batches of events from client devices, use `captureEvents`:
+
+```js
+// Batch — e.g. from a mobile app uploading queued events
+app.post('/events', (req, res) => {
+  apm.captureEvents(req.body.events, () => res.sendStatus(202));
+});
+```
+
+Each event in the batch is individually filtered (via `addEventFilter`) and written as a separate JSONL line. See **[SCHEMA.md](SCHEMA.md)** for the full event schema.
 
 ## Output format
 
