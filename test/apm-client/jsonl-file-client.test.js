@@ -448,3 +448,64 @@ test('defers writing until cloud metadata is ready', (t) => {
   client.destroy();
   t.end();
 });
+
+// --- Local file retention ---
+
+test('maxLocalRetentionDays deletes old files on rotation', (t) => {
+  const dir = tmpDir();
+  let now = new Date('2026-06-10T10:00:00Z');
+  const clock = () => now;
+  const client = makeClient(dir, {
+    clock,
+    rotationSchedule: 'daily',
+    maxLocalRetentionDays: 3,
+  });
+
+  // Write data for days 10, 11, 12, 13, 14
+  for (let day = 10; day <= 14; day++) {
+    now = new Date(`2026-06-${day}T10:00:00Z`);
+    client.sendTransaction({ name: `d${day}`, type: 'request', duration: 10 });
+    client.flush();
+  }
+
+  const files = listFiles(dir);
+  // Day 10 and 11 should be deleted (older than 3 days from day 14)
+  // Days 12, 13, 14 should remain
+  const hasDay10 = files.some((f) => f.includes('06-10'));
+  const hasDay11 = files.some((f) => f.includes('06-11'));
+  const hasDay12 = files.some((f) => f.includes('06-12'));
+  const hasDay13 = files.some((f) => f.includes('06-13'));
+  const hasDay14 = files.some((f) => f.includes('06-14'));
+
+  t.ok(!hasDay10, 'day 10 file deleted (older than 3 days)');
+  t.ok(!hasDay11, 'day 11 file deleted (older than 3 days)');
+  t.ok(hasDay12, 'day 12 file kept');
+  t.ok(hasDay13, 'day 13 file kept');
+  t.ok(hasDay14, 'day 14 file kept (current)');
+
+  client.destroy();
+  t.end();
+});
+
+test('maxLocalRetentionDays 0 means no cleanup', (t) => {
+  const dir = tmpDir();
+  let now = new Date('2026-06-10T10:00:00Z');
+  const clock = () => now;
+  const client = makeClient(dir, {
+    clock,
+    rotationSchedule: 'daily',
+    maxLocalRetentionDays: 0,
+  });
+
+  for (let day = 10; day <= 14; day++) {
+    now = new Date(`2026-06-${day}T10:00:00Z`);
+    client.sendTransaction({ name: `d${day}`, type: 'request', duration: 10 });
+    client.flush();
+  }
+
+  const files = listFiles(dir);
+  t.equal(files.length, 5, 'all 5 files kept when retention is 0');
+
+  client.destroy();
+  t.end();
+});

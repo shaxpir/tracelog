@@ -12,6 +12,7 @@ All options can be set via `require('tracelog').start({...})`, via environment v
 | `logMaxFileSize` | — | `104857600` (100MB) | Rotate when file exceeds this size in bytes |
 | `logFlushIntervalMs` | — | `1000` | How often to flush the write buffer (ms) |
 | `logRotationSchedule` | `TRACELOG_LOG_ROTATION_SCHEDULE` | `daily` | Time-based rotation: `daily`, `hourly` |
+| `maxLocalRetentionDays` | `TRACELOG_MAX_LOCAL_RETENTION_DAYS` | `0` (disabled) | Auto-delete local log files older than N days on rotation. `0` disables cleanup. |
 
 ### File naming
 
