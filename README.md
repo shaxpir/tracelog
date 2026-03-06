@@ -64,6 +64,27 @@ All options can be set via `require('tracelog').start({...})`, via environment v
 
 For the complete list of all configuration options (instrumentation, sampling, error capture, stack traces, span compression, metrics, S3 upload, cloud, and more), see **[CONFIG.md](CONFIG.md)**.
 
+## Filtering
+
+Filter functions let you modify or drop events before they are written. Return the (possibly modified) object to keep it, or return a falsy value to drop it.
+
+```js
+const apm = require('tracelog').start({ serviceName: 'my-api' });
+
+// Drop all debug-level custom events
+apm.addEventFilter((event) => {
+  return event.level === 'debug' ? false : event;
+});
+
+// Redact user emails from custom events
+apm.addEventFilter((event) => {
+  if (event.user) event.user.email = '[REDACTED]';
+  return event;
+});
+```
+
+Available filter methods: `addFilter(fn)` (adds to all types), `addTransactionFilter(fn)`, `addSpanFilter(fn)`, `addErrorFilter(fn)`, `addEventFilter(fn)`, `addMetadataFilter(fn)`.
+
 ## Auto-instrumented modules
 
 Express, Fastify, Koa, Hapi, Connect, Restify, HTTP/HTTPS, fetch/undici, PostgreSQL, MySQL, MongoDB, Redis, Elasticsearch, Cassandra, Memcached, AWS SDK (v2 & v3), GraphQL, Apollo Server, Kafka, WebSockets, generic-pool, Knex, Tedious (MSSQL), Handlebars, Pug, and more.
