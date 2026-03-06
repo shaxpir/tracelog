@@ -65,6 +65,8 @@ function makeUploader(mockS3, opts = {}) {
     environment: opts.environment || 'test',
     s3Client: mockS3,
     clock: opts.clock || (() => new Date('2026-06-15T14:30:00Z')),
+    gzipCompleted: opts.gzipCompleted,
+    gzipCurrent: opts.gzipCurrent,
     logger: opts.logger,
   });
 }
@@ -76,6 +78,7 @@ test('s3 key template resolves variables', (t) => {
   const uploader = makeUploader(mockS3, {
     keyTemplate: '{serviceName}/{environment}/{date}/{hostname}-{pid}-{timestamp}.jsonl',
     clock: () => new Date('2026-06-15T14:30:00Z'),
+    gzipCurrent: false,
   });
 
   const dir = tmpDir();
@@ -97,6 +100,7 @@ test('s3 key template supports {filename}', (t) => {
   const mockS3 = makeMockS3();
   const uploader = makeUploader(mockS3, {
     keyTemplate: 'logs/{filename}',
+    gzipCurrent: false,
   });
 
   const dir = tmpDir();
@@ -109,11 +113,11 @@ test('s3 key template supports {filename}', (t) => {
   });
 });
 
-// --- uploadCurrent ---
+// --- uploadCurrent (gzip disabled) ---
 
-test('uploadCurrent sends file content without gzip', (t) => {
+test('uploadCurrent sends raw content when gzipCurrent is false', (t) => {
   const mockS3 = makeMockS3();
-  const uploader = makeUploader(mockS3);
+  const uploader = makeUploader(mockS3, { gzipCurrent: false });
 
   const dir = tmpDir();
   const filePath = path.join(dir, 'current.jsonl');
@@ -125,14 +129,32 @@ test('uploadCurrent sends file content without gzip', (t) => {
     t.equal(mockS3.uploads[0].ContentType, 'application/x-ndjson');
     t.equal(mockS3.uploads[0].ContentEncoding, undefined, 'no gzip encoding');
     t.equal(mockS3.uploads[0].Bucket, 'test-bucket');
-
-    // Body should be the raw content
-    const body = mockS3.uploads[0].Body;
-    t.equal(body.toString(), content, 'body matches file content');
-
-    // File should still exist (not deleted)
+    t.equal(mockS3.uploads[0].Body.toString(), content, 'body matches file content');
+    t.ok(!mockS3.uploads[0].Key.endsWith('.gz'), 'key has no .gz suffix');
     t.ok(fs.existsSync(filePath), 'file not deleted');
+    t.end();
+  });
+});
 
+// --- uploadCurrent (gzip enabled, default) ---
+
+test('uploadCurrent gzips content by default', (t) => {
+  const mockS3 = makeMockS3();
+  const uploader = makeUploader(mockS3);
+
+  const dir = tmpDir();
+  const filePath = path.join(dir, 'current.jsonl');
+  const content = '{"metadata":{}}\n{"transaction":{"name":"tx1"}}\n';
+  fs.writeFileSync(filePath, content, 'utf8');
+
+  uploader.uploadCurrent(filePath, () => {
+    t.equal(mockS3.uploads.length, 1, 'one upload');
+    t.equal(mockS3.uploads[0].ContentEncoding, 'gzip', 'gzip encoding set');
+    t.ok(mockS3.uploads[0].Key.endsWith('.gz'), 'key has .gz suffix');
+
+    const decompressed = zlib.gunzipSync(mockS3.uploads[0].Body);
+    t.equal(decompressed.toString(), content, 'decompressed body matches');
+    t.ok(fs.existsSync(filePath), 'file not deleted');
     t.end();
   });
 });
@@ -147,7 +169,7 @@ test('uploadCurrent does nothing for non-existent file', (t) => {
   });
 });
 
-// --- uploadCompleted ---
+// --- uploadCompleted (gzip enabled, default) ---
 
 test('uploadCompleted gzips, uploads, and deletes local file', (t) => {
   const mockS3 = makeMockS3();
@@ -160,19 +182,44 @@ test('uploadCompleted gzips, uploads, and deletes local file', (t) => {
 
   uploader.uploadCompleted(filePath);
 
-  // uploadCompleted is async (gzip pipeline + upload), so wait a bit
   setTimeout(() => {
     t.equal(mockS3.uploads.length, 1, 'one upload');
     t.ok(mockS3.uploads[0].Key.endsWith('.gz'), 'key has .gz suffix');
     t.equal(mockS3.uploads[0].ContentEncoding, 'gzip', 'content-encoding is gzip');
 
-    // Body should be gzipped data that decompresses to the original content
     const decompressed = zlib.gunzipSync(mockS3.uploads[0].Body);
     t.equal(decompressed.toString(), content, 'decompressed body matches original');
 
-    // Original and .gz files should be deleted
     t.ok(!fs.existsSync(filePath), 'original file deleted');
     t.ok(!fs.existsSync(filePath + '.gz'), 'gz file deleted');
+
+    t.end();
+  }, 500);
+});
+
+// --- uploadCompleted (gzip disabled) ---
+
+test('uploadCompleted sends raw content when gzipCompleted is false', (t) => {
+  const mockS3 = makeMockS3();
+  const uploader = makeUploader(mockS3, { gzipCompleted: false });
+
+  const dir = tmpDir();
+  const filePath = path.join(dir, 'completed-raw.jsonl');
+  const content = '{"metadata":{}}\n{"transaction":{"name":"raw"}}\n';
+  fs.writeFileSync(filePath, content, 'utf8');
+
+  uploader.uploadCompleted(filePath);
+
+  setTimeout(() => {
+    t.equal(mockS3.uploads.length, 1, 'one upload');
+    t.ok(!mockS3.uploads[0].Key.endsWith('.gz'), 'key has no .gz suffix');
+    t.equal(mockS3.uploads[0].ContentEncoding, undefined, 'no gzip encoding');
+
+    // Body is a stream that was read — should match content
+    t.equal(mockS3.uploads[0].Body.toString(), content, 'body matches original');
+
+    // Original file should be deleted on success
+    t.ok(!fs.existsSync(filePath), 'original file deleted');
 
     t.end();
   }, 500);
@@ -259,6 +306,7 @@ test('clock affects key template date variables', (t) => {
   const uploader = makeUploader(mockS3, {
     keyTemplate: '{year}/{month}/{day}/{hour}-{minute}.jsonl',
     clock: () => fixedDate,
+    gzipCurrent: false,
   });
 
   const dir = tmpDir();

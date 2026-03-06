@@ -310,6 +310,8 @@ declare namespace apm {
     s3Region?: string;
     s3KeyTemplate?: string;
     s3UploadIntervalMs?: number;
+    s3GzipCompleted?: boolean;
+    s3GzipCurrent?: boolean;
     s3AccessKeyId?: string;
     s3SecretAccessKey?: string;
     s3SessionToken?: string;

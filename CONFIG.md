@@ -44,7 +44,9 @@ Set `s3Bucket` to enable automatic upload of log files to S3. Completed (rotated
 | `s3Bucket` | `TRACELOG_S3_BUCKET` | — | S3 bucket name. If not set, S3 upload is disabled. |
 | `s3Region` | `TRACELOG_S3_REGION` | from AWS env | AWS region |
 | `s3KeyTemplate` | `TRACELOG_S3_KEY_TEMPLATE` | `{serviceName}/{environment}/{date}/{hostname}-{pid}-{timestamp}.jsonl` | S3 key with variable substitution |
-| `s3UploadIntervalMs` | `TRACELOG_S3_UPLOAD_INTERVAL_MS` | `60000` (1 min) | How often to upload the current (incomplete) file |
+| `s3UploadIntervalMs` | `TRACELOG_S3_UPLOAD_INTERVAL_MS` | `300000` (5 min) | How often to upload the current (incomplete) file |
+| `s3GzipCompleted` | `TRACELOG_S3_GZIP_COMPLETED` | `true` | Gzip completed (rotated) files before uploading to S3 |
+| `s3GzipCurrent` | `TRACELOG_S3_GZIP_CURRENT` | `true` | Gzip the current (incomplete) file before uploading to S3 |
 | `s3AccessKeyId` | `TRACELOG_S3_ACCESS_KEY_ID` | from AWS credential chain | AWS access key ID |
 | `s3SecretAccessKey` | `TRACELOG_S3_SECRET_ACCESS_KEY` | from AWS credential chain | AWS secret access key |
 | `s3SessionToken` | `TRACELOG_S3_SESSION_TOKEN` | — | AWS session token (for temporary credentials) |
