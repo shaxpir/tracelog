@@ -41,25 +41,24 @@ declare namespace apm {
       fn?: (err: Error) => void
     ): void;
 
-    // Errors
-    captureError (
-      err: Error | string | ParameterizedMessageObject,
-      callback?: CaptureErrorCallback
-    ): void;
-    captureError (
-      err: Error | string | ParameterizedMessageObject,
-      options?: CaptureErrorOptions,
-      callback?: CaptureErrorCallback
-    ): void;
+    // Write methods (primary API)
+    writeError (err: Error | string | ParameterizedMessageObject, callback?: CaptureErrorCallback): void;
+    writeError (err: Error | string | ParameterizedMessageObject, options?: CaptureErrorOptions, callback?: CaptureErrorCallback): void;
+    writeEvent (type: string, options?: CaptureEventOptions, callback?: Function): void;
+    writeEvents (events: CaptureEventData[], callback?: Function): void;
+    writeTransaction (transaction: object): void;
+    writeSpan (span: object): void;
 
-    // Custom events
+    // Backward compat aliases
+    captureError (err: Error | string | ParameterizedMessageObject, callback?: CaptureErrorCallback): void;
+    captureError (err: Error | string | ParameterizedMessageObject, options?: CaptureErrorOptions, callback?: CaptureErrorCallback): void;
     captureEvent (type: string, options?: CaptureEventOptions, callback?: Function): void;
     captureEvents (events: CaptureEventData[], callback?: Function): void;
-
-    // Write pre-built client-originated transaction/span records to JSONL output.
-    // Designed for server endpoints that receive span-shaped perf data from clients.
     writeClientTransaction (transaction: object): void;
     writeClientSpan (span: object): void;
+
+    // Channels — route records to separate JSONL files
+    getChannel (name: string): Channel;
 
     // Distributed Tracing
     currentTraceparent: string | null;
@@ -320,6 +319,14 @@ declare namespace apm {
     s3AccessKeyId?: string;
     s3SecretAccessKey?: string;
     s3SessionToken?: string;
+  }
+
+  interface Channel {
+    writeEvent (type: string, options?: CaptureEventOptions, callback?: Function): void;
+    writeEvents (events: CaptureEventData[], callback?: Function): void;
+    writeError (err: Error | string | ParameterizedMessageObject, options?: CaptureErrorOptions, callback?: CaptureErrorCallback): void;
+    writeTransaction (transaction: object): void;
+    writeSpan (span: object): void;
   }
 
   interface CaptureEventOptions {
