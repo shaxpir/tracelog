@@ -322,6 +322,7 @@ declare namespace apm {
     level?: 'debug' | 'info' | 'warn' | 'error' | 'fatal';
     timestamp?: number;
     duration?: number;
+    error?: Error | any;
     user?: EventUserInfo;
     client?: EventClientInfo;
     params?: { [key: string]: any };
