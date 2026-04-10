@@ -80,7 +80,7 @@ test('sendEvent includes all standard fields', (t) => {
     level: 'info',
     user: { id: 'u-abc123', email: 'jane@example.com', username: 'jane_doe' },
     client: {
-      name: 'shaxpir-ios',
+      name: 'duiduidui-ios',
       version: '2.4.1',
       os: { name: 'iOS', version: '18.2' },
       device: { model: 'iPhone 16 Pro', type: 'phone' },
@@ -106,7 +106,7 @@ test('sendEvent includes all standard fields', (t) => {
   t.equal(ev.user.username, 'jane_doe');
 
   // Client
-  t.equal(ev.client.name, 'shaxpir-ios');
+  t.equal(ev.client.name, 'duiduidui-ios');
   t.equal(ev.client.version, '2.4.1');
   t.equal(ev.client.os.name, 'iOS');
   t.equal(ev.client.os.version, '18.2');

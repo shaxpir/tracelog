@@ -1,5 +1,5 @@
 {
-  "name": "@shaxpir/tracelog",
+  "name": "@redthreadlabs/tracelog",
   "version": "1.3.1",
   "description": "Node.js APM instrumentation that writes traces to JSONL files",
   "publishConfig": {
@@ -24,7 +24,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/shaxpir/tracelog.git"
+    "url": "git://github.com/redthreadlabs/tracelog.git"
   },
   "engines": {
     "node": ">=14.17.0"
@@ -41,12 +41,12 @@
     "transactions",
     "monitoring"
   ],
-  "author": "Benji Smith <benji@shaxpir.com>",
+  "author": "Benji Smith <benji@redthreadlabs.com>",
   "license": "BSD-2-Clause",
   "bugs": {
-    "url": "https://github.com/shaxpir/tracelog/issues"
+    "url": "https://github.com/redthreadlabs/tracelog/issues"
   },
-  "homepage": "https://github.com/shaxpir/tracelog",
+  "homepage": "https://github.com/redthreadlabs/tracelog",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.0.0",
     "@elastic/ecs-pino-format": "^1.5.0",
